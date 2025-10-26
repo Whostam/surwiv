@@ -1,82 +1,50 @@
-# Open sourced surviv.io
-Survev.io is an open source recreation of a hit web game "surviv.io" that has been permanently shut down.
+# Survev.io
 
-Our goal is to immortalize it by getting the recreation as close as possible to the last canonical version of the game.
+Survev.io is a community-driven recreation of the original surviv.io battle royale. The goal of the project is to preserve the "classic" experience by rebuilding the final pre-acquisition version of the game with modern, open-source tooling and an active community of contributors.
 
-We do not consider any updates after the Kongregate acquisition canonical, so those will not be a part of the project.
+<p align="center">
+  <img src="client/public/favicon.svg" alt="Survev logo" width="96" />
+</p>
 
-## Running locally
+## What you'll find in this repository
 
-start client development server with `pnpm dev:client`
+- **Monorepo layout.** The top-level workspace is managed with [`pnpm`](https://pnpm.io/) and contains the production game server (`server/`), the browser client (`client/`), shared definitions (`shared/`), and a standalone test runner (`tests/`).
+- **Battle-tested networking stack.** The server wraps a Hono-based API layer with a high-frequency WebSocket game loop capable of scaling to multi-process deployments.
+- **Configurable content pipeline.** Maps, cosmetics, loot tables, and playlists live under `shared/` and are hot-reloadable through the development scripts.
+- **Community moderation tools.** Account, ban, and match logging endpoints power dashboards and automation for public deployments.
 
-and server with `pnpm dev:server`
+If you are evaluating Survev.io for the first time, start with the guides below:
 
-or cd into server and client directories and run `pnpm dev` for each
+- [Developer quick-start](./docs/development.md) — install prerequisites, launch the full stack, and understand the dev scripts.
+- [Interactive setup & configuration](./docs/setup.md) — learn how the guided `pnpm survev-setup` flow works and how to manage the resulting configuration.
+- [API routing & moderation reference](./docs/api.md) — explore the HTTP endpoints exposed by the API service.
+- [Hosting considerations](./HOSTING.md) — production tips, reverse proxy configuration, and TLS guidance.
 
-### Additional steps for accounts
-Accounts are optional, set `accountsEnabled` to false in config.ts to disable them. 
-If disabled, you can skip the steps below.
+## Architectural overview
 
-First generate a private key and set encryptLoadoutSecret to it, this is used to encrypt loadouts.
-```sh
-openssl rand -base64 10
-```
- 
-After that, you need to create and populate the PostgreSQL database and apply the database schema.
+Survev.io is composed of three cooperating services:
 
-After [installing PostgreSQL](https://www.postgresql.org/download/), start the service and create a database:
+1. **API server (`server/src/api`)** — Handles authentication, account management, matchmaking, moderation tooling, and game discovery. Built on top of [Hono](https://hono.dev/) with PostgreSQL/Redis persistence.
+2. **Game server (`server/src/gameServer.ts`)** — Runs the authoritative battle royale simulation. The server can operate in single-process mode for development or spin games out to isolated workers in production.
+3. **Client (`client/`)** — A Vite-powered web client that speaks the same networking protocol as the legacy surviv.io client while embracing modern TypeScript and asset tooling.
 
-```bash
-sudo -u postgres initdb --locale=C.UTF-8 --encoding=UTF8 -D /var/lib/postgres/data --data-checksums
+Shared TypeScript packages under `shared/` supply deterministic map data, item definitions, cosmetics, and protocol schemas to both the server and the client.
 
-systemctl enable --now postgresql.service
+## Contribution expectations
 
-sudo -u postgres createuser survev
-sudo -u postgres createdb survev -O survev
-```
+We welcome contributions ranging from bug fixes to feature work. Before opening a pull request:
 
-Then populate the database with the schema:
+1. Review [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) and [COMMIT_FORMAT.md](./COMMIT_FORMAT.md).
+2. Follow the quick-start guide to reproduce the issue or run the feature locally.
+3. Run the relevant checks (`pnpm lint`, workspace-specific `pnpm test`, etc.) so CI and reviewers have a clean signal.
 
-```bash
+Discussions, feature proposals, and roadmap ideas are best filed as GitHub issues so they can be triaged publicly.
 
- cd server
- 
- # run this everytime you make changes to the schema.ts
- pnpm run db:generate
- pnpm run db:migrate
+## Useful links
 
- # start the server
- pnpm run dev
- # or
- # pnpm run dev:api
- # pnpm run dev:game
-```
+- [Balance notes](./balance.txt)
+- [Production nginx example](./nginx.conf)
+- [Client assets](./client/public)
+- [Shared definitions](./shared)
 
-to interact with the database through an interface
-```bash
- pnpm run db:studio 
-```
-
-to wipe the db and start over run, useful when messing up things
-DO NOT RUN THIS IN PRODUCTION
-```bash
- # set database permissions
- sudo -u postgres psql -c "ALTER USER survev WITH PASSWORD 'survev';"
- pnpm run db:wipe
-```
-
-### Additional steps for caching
-Caching is disabled by default, set cachingEnabled to true in config.ts to enable it.
-
-First install redis:
-```sh
-sudo apt install redis-server
-```
-
-Ensure Redis starts on boot and is running:
-```sh
-systemctl enable --now redis-server
-```
-
-## Production builds
-See [HOSTING.md](./HOSTING.md)
+If you maintain a public Survev.io server, consider contributing documentation or automation scripts back to the repository to help the next wave of operators.
