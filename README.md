@@ -3,7 +3,7 @@
 Survev.io is a community-driven recreation of the original surviv.io battle royale. The goal of the project is to preserve the "classic" experience by rebuilding the final pre-acquisition version of the game with modern, open-source tooling and an active community of contributors.
 
 <p align="center">
-  <img src="client/public/favicon.svg" alt="Survev logo" width="96" />
+  <img src="client/public/favicon.ico" alt="Survev logo" width="96" />
 </p>
 
 ## What you'll find in this repository
